@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <title>Superprompter V3 - Der absolute Prompt Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-card: #111827;
+            --accent: #6366f1;
+            --accent-soft: rgba(99,102,241,0.12);
+            --text: #e5e7eb;
+            --text-soft: #9ca3af;
+            --border: #1f2937;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --bg-card: #ffffff;
+            --text: #1f2937;
+            --text-soft: #6b7280;
+            --border: #e5e7eb;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .shell {
+            width: 100%;
+            max-width: 1200px;
+            background: var(--bg-card);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.1);
+            padding: 20px 22px 24px;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        
+        .logo-badge {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), #4f46e5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            box-shadow: 0 0 0 2px rgba(129,140,248,0.5);
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            letter-spacing: 0.03em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .subtitle {
+            margin: 2px 0 0;
+            font-size: 0.85rem;
+            color: var(--text-soft);
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .theme-toggle {
+            background: var(--accent);
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .wizard-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        
+        .wizard-step {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-soft);
+            cursor: pointer;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        
+        .wizard-step.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        .wizard-step.completed {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+        
+        .step-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .step-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section {
+            background: var(--bg-card);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        
+        h2 {
+            margin: 0 0 16px 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+        }
+        
+        label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+        
+        textarea, input, select {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 10px 12px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        
+        textarea:focus, input:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .col-50 {
+            flex: 1 1 calc(50% - 8px);
+            min-width: 250px;
+        }
+        
+        .hint {
+            font-size: 0.8rem;
+            color: var(--text-soft);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+        
+        .example-box {
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .example-title {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+        
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            border-radius: 8px;
+            border: 1px solid transparent;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--accent);
+            color: white;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+        }
+        
+        button.secondary {
+            background: transparent;
+            color: var(--text);
+            border-color: var(--border);
+        }
+        
+        button.success {
+            background: var(--success);
+        }
+        
+        button.warning {
+            background: var(--warning);
+        }
+        
+        .output-section {
+            background: var(--bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 16px;
+            margin-top: 20px;
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .template-selector {
+            margin-bottom: 16px;
+        }
+        
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .template-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg-card);
+        }
+        
+        .template-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .template-card.selected {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+        
+        .template-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .template-desc {
+            font-size: 0.8rem;
+            color: var(--text-soft);
+        }
+        
+        .history-section {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        
+        .history-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+        
+        .history-item:hover {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            
+            .shell {
+                padding: 16px;
+            }
+            
+            .row {
+                flex-direction: column;
+            }
+            
+            .col-50 {
+                flex: 1 1 100%;
+            }
+            
+            .wizard-nav {
+                flex-wrap: wrap;
+            }
+            
+            .header-controls {
+                order: -1;
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <header>
+            <div class="logo-section">
+                <div class="logo-badge">⚡</div>
+                <div>
+                    <h1><span>🎯</span> Superprompter V3</h1>
+                    <p class="subtitle">Der absolute Prompt Generator - KI-Prompts mit System</p>
+                </div>
+            </div>
+            <div class="header-controls">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Theme wechseln">🌙</button>
+            </div>
+        </header>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="wizard-nav">
+            <button class="wizard-step active" onclick="showStep(1)">1. Typ wählen</button>
+            <button class="wizard-step" onclick="showStep(2)">2. Ziel definieren</button>
+            <button class="wizard-step" onclick="showStep(3)">3. Struktur</button>
+            <button class="wizard-step" onclick="showStep(4)">4. Beispiele</button>
+            <button class="wizard-step" onclick="showStep(5)">5. Details</button>
+            <button class="wizard-step" onclick="showStep(6)">6. Fertig</button>
+        </div>
+
+        <!-- Schritt 1: Anwendungstyp -->
+        <div class="step-content active" id="step1">
+            <div class="section">
+                <h2><span>🏗️</span> Was möchtest du erstellen?</h2>
+                <p class="hint">Wähle den Typ des Prompts, den du generieren möchtest:</p>
+                
+                <div class="template-grid">
+                    <div class="template-card" onclick="selectTemplate('general')">
+                        <div class="template-title">📝 Allgemeiner Prompt</div>
+                        <div class="template-desc">Für allgemeine KI-Anfragen und Aufgaben</div>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate('code')">
+                        <div class="template-title">💻 Code-Entwicklung</div>
+                        <div class="template-desc">Programmieraufgaben und Code-Generierung</div>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate('content')">
+                        <div class="template-title">✍️ Content-Erstellung</div>
+                        <div class="template-desc">Texte, Artikel, Marketing-Content</div>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate('analysis')">
+                        <div class="template-title">📊 Analyse & Daten</div>
+                        <div class="template-desc">Datenanalyse, Research, Bewertungen</div>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate('creative')">
+                        <div class="template-title">🎨 Kreativ & Design</div>
+                        <div class="template-desc">Kreative Projekte, Design-Aufgaben</div>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate('custom')">
+                        <div class="template-title">⚙️ Benutzerdefiniert</div>
+                        <div class="template-desc">Vollständig anpassbare Prompt-Struktur</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schritt 2: Ziel und Zweck -->
+        <div class="step-content" id="step2">
+            <div class="section">
+                <h2><span>🎯</span> Ziel und Zweck definieren</h2>
+                
+                <label for="promptGoal">Was soll der KI-Assistent tun?</label>
+                <textarea id="promptGoal" placeholder="Beschreibe die Hauptaufgabe oder das Ziel des Prompts..." onchange="updatePreview()"></textarea>
+                <p class="hint">Je spezifischer die Beschreibung, desto besser das Ergebnis.</p>
+                
+                <div class="example-box">
+                    <div class="example-title">Beispiel:</div>
+                    Erstelle einen interaktiven Quiz-Generator für IT-Zertifizierungen mit sofortiger Auswertung und Erklärungen.
+                </div>
+                
+                <div class="row">
+                    <div class="col-50">
+                        <label for="targetAudience">Zielgruppe</label>
+                        <input id="targetAudience" type="text" placeholder="z.B. Anfänger, Experten, Kinder..." onchange="updatePreview()">
+                    </div>
+                    <div class="col-50">
+                        <label for="tone">Stil und Ton</label>
+                        <select id="tone" onchange="updatePreview()">
+                            <option value="">Bitte wählen...</option>
+                            <option value="formal">Formell und professionell</option>
+                            <option value="casual">Locker und entspannt</option>
+                            <option value="technical">Technisch und präzise</option>
+                            <option value="creative">Kreativ und enthusiastisch</option>
+                            <option value="educational">Pädagogisch und verständlich</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schritt 3: Struktur und Regeln -->
+        <div class="step-content" id="step3">
+            <div class="section">
+                <h2><span>🏗️</span> Struktur und Regeln festlegen</h2>
+                
+                <label for="mainTasks">Hauptaufgaben</label>
+                <textarea id="mainTasks" placeholder="Welche konkreten Aufgaben soll die KI ausführen?" onchange="updatePreview()"></textarea>
+                <p class="hint">Liste die wichtigsten Schritte oder Aufgaben auf.</p>
+                
+                <div class="row">
+                    <div class="col-50">
+                        <label for="constraints">Einschränkungen</label>
+                        <textarea id="constraints" placeholder="Technische Limits, Formatvorgaben, Verbotsregeln..." onchange="updatePreview()"></textarea>
+                    </div>
+                    <div class="col-50">
+                        <label for="formatOutput">Ausgabeformat</label>
+                        <select id="formatOutput" onchange="updatePreview()">
+                            <option value="">Standard-Text</option>
+                            <option value="markdown">Markdown</option>
+                            <option value="json">JSON</option>
+                            <option value="html">HTML</option>
+                            <option value="code">Code/Script</option>
+                            <option value="table">Tabelle/Liste</option>
+                        </select>
+                        <p class="hint">Wie soll das Endergebnis formatiert sein?</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schritt 4: Beispiele und Referenzen -->
+        <div class="step-content" id="step4">
+            <div class="section">
+                <h2><span>📚</span> Beispiele und Referenzen</h2>
+                
+                <label for="examples">Beispiele oder Vorlagen</label>
+                <textarea id="examples" placeholder="Konkrete Beispiele, ähnliche Projekte oder Vorlagen, die der KI als Orientierung dienen können..." onchange="updatePreview()"></textarea>
+                <p class="hint">Beispiele helfen der KI, deine Erwartungen besser zu verstehen.</p>
+                
+                <div class="example-box">
+                    <div class="example-title">Beispiel für Code-Generierung:</div>
+                    Erstelle eine React-Komponente ähnlich wie: import React from 'react'; const MyComponent = () => { return &lt;div&gt;Hello World&lt;/div&gt;; };
+                </div>
+                
+                <label for="context">Zusätzlicher Kontext</label>
+                <textarea id="context" placeholder="Weitere Informationen, Hintergrundwissen oder spezielle Anforderungen..." onchange="updatePreview()"></textarea>
+            </div>
+        </div>
+
+        <!-- Schritt 5: Details und Verfeinerung -->
+        <div class="step-content" id="step5">
+            <div class="section">
+                <h2><span>⚙️</span> Details und Verfeinerung</h2>
+                
+                <div class="row">
+                    <div class="col-50">
+                        <label for="complexity">Komplexitätsgrad</label>
+                        <select id="complexity" onchange="updatePreview()">
+                            <option value="simple">Einfach - Grundlegende Aufgabe</option>
+                            <option value="moderate">Moderat - Mehrere Schritte</option>
+                            <option value="complex">Komplex - Umfangreiche Anforderungen</option>
+                        </select>
+                    </div>
+                    <div class="col-50">
+                        <label for="length">Erwartete Länge</label>
+                        <select id="length" onchange="updatePreview()">
+                            <option value="short">Kurz - Bis zu 200 Wörter</option>
+                            <option value="medium">Mittel - 200-500 Wörter</option>
+                            <option value="long">Lang - 500+ Wörter</option>
+                            <option value="variable">Variabel - Je nach Inhalt</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <label for="specialRequirements">Spezielle Anforderungen</label>
+                <textarea id="specialRequirements" placeholder="Zusätzliche Anweisungen, Formatierungswünsche oder besondere Hinweise..." onchange="updatePreview()"></textarea>
+                
+                <div class="row">
+                    <div class="col-50">
+                        <label for="iteration">Iterations-Modus</label>
+                        <select id="iteration" onchange="updatePreview()">
+                            <option value="single">Einmalige Ausgabe</option>
+                            <option value="refine">Mit Verbesserungs-Option</option>
+                            <option value="interactive">Interaktive Weiterarbeit</option>
+                        </select>
+                    </div>
+                    <div class="col-50">
+                        <label for="language">Ausgabesprache</label>
+                        <select id="language" onchange="updatePreview()">
+                            <option value="de">Deutsch</option>
+                            <option value="en">English</option>
+                            <option value="auto">Automatisch erkennen</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schritt 6: Fertig -->
+        <div class="step-content" id="step6">
+            <div class="section">
+                <h2><span>✨</span> Dein perfekter Prompt</h2>
+                <p class="hint">Hier ist dein optimierter Prompt - kopiere ihn und verwende ihn in deiner KI:</p>
+                
+                <div class="output-section" id="finalOutput"></div>
+                
+                <div class="btn-row">
+                    <button onclick="copyFinalPrompt()">📋 Kopieren</button>
+                    <button onclick="savePrompt()" class="success">💾 Als Datei speichern</button>
+                    <button onclick="addToHistory()" class="secondary">📚 Zu Historie hinzufügen</button>
+                </div>
+                
+                <div class="section">
+                    <h3><span>📋</span> Prompt-Historie</h3>
+                    <p class="hint">Deine zuletzt erstellten Prompts:</p>
+                    <div class="history-section" id="historySection">
+                        <div class="history-item" onclick="loadFromHistory(0)">
+                            <strong>Beispiel-Prompt</strong> - Allgemeiner Prompt - 02.12.2025 14:30
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button onclick="previousStep()" id="prevBtn" class="secondary" style="display: none;">← Zurück</button>
+            <button onclick="nextStep()" id="nextBtn">Weiter →</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let currentStep = 1;
+        let selectedTemplate = '';
+        let promptHistory = [];
+        
+        // Theme Toggle
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }
+        
+        // Template Selection
+        function selectTemplate(template) {
+            selectedTemplate = template;
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target.closest('.template-card').classList.add('selected');
+            
+            // Template-spezifische Voreinstellungen
+            setTemplateDefaults(template);
+            updatePreview();
+        }
+        
+        function setTemplateDefaults(template) {
+            const defaults = {
+                general: { tone: 'casual', complexity: 'moderate' },
+                code: { tone: 'technical', formatOutput: 'code', complexity: 'complex' },
+                content: { tone: 'creative', length: 'medium', complexity: 'moderate' },
+                analysis: { tone: 'formal', formatOutput: 'markdown', complexity: 'complex' },
+                creative: { tone: 'creative', length: 'long', complexity: 'complex' },
+                custom: { tone: '', complexity: 'moderate' }
+            };
+            
+            if (defaults[template]) {
+                Object.keys(defaults[template]).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) element.value = defaults[template][key];
+                });
+            }
+        }
+        
+        // Step Navigation
+        function showStep(step) {
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.wizard-step').forEach((stepEl, index) => {
+                stepEl.classList.remove('active');
+                if (index + 1 < step) {
+                    stepEl.classList.add('completed');
+                } else {
+                    stepEl.classList.remove('completed');
+                }
+                if (index + 1 === step) {
+                    stepEl.classList.add('active');
+                }
+            });
+            
+            document.getElementById(`step${step}`).classList.add('active');
+            currentStep = step;
+            updateProgress();
+            updateNavigationButtons();
+            
+            if (step === 6) {
+                generateFinalPrompt();
+            }
+        }
+        
+        function nextStep() {
+            if (currentStep < 6) {
+                showStep(currentStep + 1);
+            }
+        }
+        
+        function previousStep() {
+            if (currentStep > 1) {
+                showStep(currentStep - 1);
+            }
+        }
+        
+        function updateProgress() {
+            const progress = (currentStep / 6) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+        
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            prevBtn.style.display = currentStep > 1 ? 'flex' : 'none';
+            nextBtn.textContent = currentStep === 6 ? 'Fertig' : 'Weiter →';
+        }
+        
+        // Prompt Generation
+        function updatePreview() {
+            // Live-Preview wird bei jedem Schritt aktualisiert
+        }
+        
+        function generateFinalPrompt() {
+            const goal = document.getElementById('promptGoal').value;
+            const audience = document.getElementById('targetAudience').value;
+            const tone = document.getElementById('tone').value;
+            const tasks = document.getElementById('mainTasks').value;
+            const constraints = document.getElementById('constraints').value;
+            const format = document.getElementById('formatOutput').value;
+            const examples = document.getElementById('examples').value;
+            const context = document.getElementById('context').value;
+            const complexity = document.getElementById('complexity').value;
+            const length = document.getElementById('length').value;
+            const special = document.getElementById('specialRequirements').value;
+            const iteration = document.getElementById('iteration').value;
+            const language = document.getElementById('language').value;
+            
+            let prompt = '';
+            
+            // Grundstruktur basierend auf Template
+            prompt += `Du bist ein KI-Assistent. Deine Aufgabe ist es, `;
+            
+            if (goal) {
+                prompt += goal;
+            } else {
+                prompt += 'eine spezifische Aufgabe';
+            }
+            
+            if (audience) {
+                prompt += ` für ${audience}`;
+            }
+            
+            prompt += ' zu erstellen.\n\n';
+            
+            // Anweisungen und Aufgaben
+            if (tasks) {
+                prompt += 'AUFGABEN:\n';
+                prompt += tasks + '\n\n';
+            }
+            
+            // Technische Einschränkungen
+            if (constraints || format) {
+                prompt += 'TECHNISCHE VORGABEN:\n';
+                if (constraints) prompt += `- Einschränkungen: ${constraints}\n`;
+                if (format) prompt += `- Ausgabeformat: ${format}\n`;
+                prompt += '\n';
+            }
+            
+            // Stil und Ton
+            if (tone || complexity || length) {
+                prompt += 'STILRICHTLINIEN:\n';
+                if (tone) prompt += `- Ton: ${tone}\n`;
+                if (complexity) prompt += `- Komplexität: ${complexity}\n`;
+                if (length) prompt += `- Länge: ${length}\n`;
+                prompt += '\n';
+            }
+            
+            // Beispiele und Kontext
+            if (examples || context) {
+                prompt += 'REFERENZEN:\n';
+                if (examples) prompt += `Beispiele: ${examples}\n`;
+                if (context) prompt += `Kontext: ${context}\n`;
+                prompt += '\n';
+            }
+            
+            // Spezielle Anforderungen
+            if (special || iteration || language) {
+                prompt += 'ZUSÄTZLICHE ANFORDERUNGEN:\n';
+                if (special) prompt += `- ${special}\n`;
+                if (iteration) prompt += `- Iterationsmodus: ${iteration}\n`;
+                if (language && language !== 'auto') prompt += `- Sprache: ${language === 'de' ? 'Deutsch' : 'English'}\n`;
+                prompt += '\n';
+            }
+            
+            // Abschluss
+            prompt += 'Bitte befolge alle oben genannten Anweisungen sorgfältig. ';
+            prompt += 'Erkläre bei Bedarf deine Vorgehensweise und Designentscheidungen. ';
+            
+            if (iteration === 'refine') {
+                prompt += 'Sei bereit, das Ergebnis basierend auf Feedback zu verbessern. ';
+            } else if (iteration === 'interactive') {
+                prompt += 'Arbeite interaktiv und stelle Rückfragen bei Unklarheiten. ';
+            }
+            
+            prompt += '\n\nBeginne nun mit der Ausführung der Aufgabe.';
+            
+            document.getElementById('finalOutput').textContent = prompt;
+        }
+        
+        // Utility Functions
+        function copyFinalPrompt() {
+            const text = document.getElementById('finalOutput').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Prompt in Zwischenablage kopiert!');
+            }).catch(() => {
+                showToast('Kopieren fehlgeschlagen. Bitte manuell kopieren.', 'error');
+            });
+        }
+        
+        function savePrompt() {
+            const text = document.getElementById('finalOutput').textContent;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `prompt-${new Date().toISOString().slice(0, 10)}-${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Prompt als Datei gespeichert!');
+        }
+        
+        function addToHistory() {
+            const text = document.getElementById('finalOutput').textContent;
+            const timestamp = new Date().toLocaleString('de-DE');
+            const historyItem = {
+                text: text,
+                timestamp: timestamp,
+                type: selectedTemplate || 'general'
+            };
+            
+            promptHistory.unshift(historyItem);
+            if (promptHistory.length > 10) {
+                promptHistory.pop();
+            }
+            
+            updateHistoryDisplay();
+            showToast('Prompt zur Historie hinzugefügt!');
+        }
+        
+        function updateHistoryDisplay() {
+            const historySection = document.getElementById('historySection');
+            historySection.innerHTML = '';
+            
+            if (promptHistory.length === 0) {
+                historySection.innerHTML = '<p class="hint">Noch keine Historie vorhanden.</p>';
+                return;
+            }
+            
+            promptHistory.forEach((item, index) => {
+                const historyElement = document.createElement('div');
+                historyElement.className = 'history-item';
+                historyElement.innerHTML = `
+                    <strong>Prompt ${index + 1}</strong> - ${item.type} - ${item.timestamp}
+                `;
+                historyElement.onclick = () => loadFromHistory(index);
+                historySection.appendChild(historyElement);
+            });
+        }
+        
+        function loadFromHistory(index) {
+            if (promptHistory[index]) {
+                document.getElementById('finalOutput').textContent = promptHistory[index].text;
+                showToast('Prompt aus Historie geladen!');
+            }
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgress();
+            updateNavigationButtons();
+            updateHistoryDisplay();
+        });
+        
+        // Auto-save to localStorage
+        setInterval(() => {
+            const formData = {};
+            const inputs = document.querySelectorAll('textarea, input, select');
+            inputs.forEach(input => {
+                if (input.id) {
+                    formData[input.id] = input.value;
+                }
+            });
+            localStorage.setItem('superprompterData', JSON.stringify(formData));
+        }, 30000); // Alle 30 Sekunden
+        
+        // Load from localStorage on page load
+        window.addEventListener('load', () => {
+            const savedData = localStorage.getItem('superprompterData');
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                Object.keys(formData).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.value = formData[key];
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
